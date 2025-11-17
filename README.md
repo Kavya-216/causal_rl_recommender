@@ -87,6 +87,27 @@ pip install -r requirements.txt
 uvicorn api.server:app --reload --host 0.0.0.0 --port 8000
 ```
 
+Quick commands (one-line)
+-------------------------
+
+If you want a compact set of commands that does the minimal pipeline in one go (useful for quick starts), run:
+
+```bash
+git clone <your-repo-url>
+cd causal_rl_recommender
+python3.10 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+./.venv/bin/python -m src.preprocessing.auto_clean
+./.venv/bin/python -m src.preprocessing.embedder
+./.venv/bin/python -m src.preprocessing.populate_database
+uvicorn api.server:app --reload --host 0.0.0.0 --port 8000
+```
+
+Convenience targets
+-------------------
+
+This repository also includes a `Makefile` and `REBUILD.md` with convenience targets and Codespaces-specific rebuild instructions. Use the `Makefile` targets for `preprocess`, `embed`, `populate`, `train`, and `serve` to avoid typing long commands. See `REBUILD.md` for a tested Codespaces rebuild checklist.
+
 Project layout (high level)
 ---------------------------
 

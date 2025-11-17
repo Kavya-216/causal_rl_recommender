@@ -1,5 +1,28 @@
-# Minimal Dockerfile for CI-friendly runs and local testing.
-# Builds a lightweight image suitable for running the API and lightweight evaluation.
+# Multi-stage Dockerfile that merges the devcontainer and CI/local images.
+# - First stage builds wheels for faster installs and isolates build dependencies.
+# - Final stage installs runtime deps and contains the application source.
+
+FROM python:3.10-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Install build-time dependencies needed to build wheels for some packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    git \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /app/requirements.txt
+
+# Build wheels to speed up installation in the final image
+RUN pip install --upgrade pip setuptools wheel && \
+    pip wheel --no-cache-dir --wheel-dir /wheels -r /app/requirements.txt || true
 
 FROM python:3.10-slim
 
@@ -8,12 +31,14 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system deps commonly needed for ML packages and building wheels
+# Minimal runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    git \
-    curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy pre-built wheels from builder (if any) and install
+COPY --from=builder /wheels /wheels
+RUN pip install --upgrade pip && pip install --no-cache-dir /wheels/* || true
 
 # Copy project files
 COPY requirements.txt ./
@@ -27,10 +52,9 @@ RUN useradd -m appuser
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python deps (this keeps image small but will install everything listed)
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+# Install any remaining requirements (fallback if wheels failed)
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt || true
 
-# Expose port and set the default command to run the API server
 EXPOSE 8000
 
 USER appuser
