@@ -308,9 +308,6 @@ data/processed/           models/
 						 - rl/ppo_model.zip (when trained)
 ```
 
-Notes about visuals
-- Mermaid diagrams render on GitHub and many markdown viewers; if your viewer doesn't display them, rely on the ASCII diagrams above.
-- If you'd like PNG/SVG exports of these diagrams committed into the repo, I can generate them and add them under `docs/` (they will increase repo size). Tell me which diagrams to export.
 
 
 # causal_rl_recommender
